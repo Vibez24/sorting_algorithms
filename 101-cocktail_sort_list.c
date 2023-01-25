@@ -1,121 +1,83 @@
 #include "sort.h"
-
+void swap_nodes(listint_t **list, listint_t **a, listint_t **b, int *s);
+void css_recurse(listint_t **l, listint_t *curr, listint_t *stop, int dir);
 /**
- * swap_list - swaps the elements of the list
- *
- * @ptr1: first pointer
- * @ptr2: second pointer
- * @n: n is 0 for increase, n is 1 for decrease
- * Return: no return
- */
-void swap_list(listint_t **ptr1, listint_t **ptr2, int n)
-{
-	listint_t *aux, *tmp;
-
-	aux = *ptr1;
-	tmp = *ptr2;
-
-	aux->next = tmp->next;
-	tmp->prev = aux->prev;
-
-	if (tmp->next)
-		tmp->next->prev = aux;
-
-	if (aux->prev)
-		aux->prev->next = tmp;
-
-	aux->prev = tmp;
-	tmp->next = aux;
-
-	if (n == 0)
-		*ptr1 = tmp;
-	else
-		*ptr2 = aux;
-}
-
-/**
- * increase_sort - move the bigger numbers to the end
- *
- * @ptr: pointer to the bigger number
- * @limit: limit of the list
- * @list: list of integers
- * Return: no return
- */
-void increase_sort(listint_t **ptr, listint_t **limit, listint_t **list)
-{
-	listint_t *aux;
-
-	aux = *ptr;
-
-	while (aux != *limit && aux->next != *limit)
-	{
-		if (aux->n > aux->next->n)
-		{
-			swap_list(&aux, &(aux->next), 0);
-			if (aux->prev == NULL)
-				*list = aux;
-			print_list(*list);
-		}
-		aux = aux->next;
-	}
-
-	*limit = aux;
-	*ptr = aux;
-}
-
-/**
- * decrease_sort - moves the smaller numbers to the start
- *
- * @ptr: pointer to the smaller number
- * @limit: limit of the list
- * @list: list of integers
- * Return: no return
- */
-void decrease_sort(listint_t **ptr, listint_t **limit, listint_t **list)
-{
-	listint_t *aux;
-
-	aux = *ptr;
-
-	while (aux != *limit && aux->prev != *limit)
-	{
-		if (aux->n < aux->prev->n)
-		{
-			swap_list(&(aux->prev), &aux, 1);
-			if (aux->prev->prev == NULL)
-				*list = aux->prev;
-			print_list(*list);
-		}
-		aux = aux->prev;
-	}
-
-	*limit = aux;
-	*ptr = aux;
-}
-
-/**
- * cocktail_sort_list - sorts a doubly linked list
- * of integers in ascending order using the
- * Cocktail shaker sort algorithm
- *
- * @list: head of the linked list
- * Return: no return
+ * cocktail_sort_list - sort doubly-linked list with cocktail method
+ * @list: list to sort
  */
 void cocktail_sort_list(listint_t **list)
 {
-	listint_t *limit1, *limit2, *ptr;
-
-	if (list == NULL)
+	/* cover NULL lists or list < 2 nodes */
+	if (!list || !(*list) || !(*list)->next)
 		return;
 
-	if (*list == NULL)
-		return;
+	css_recurse(&(*list), *list, NULL, 1);
+}
+/**
+ * css_recurse - recursive sorting component of cocktail shaker sort
+ * @l: list being sorted (for print)
+ * @curr: current node of list
+ * @stop: last sorted node
+ * @dir: direction of parse (left-to-right: 1, or right-to-left: -1)
+ */
+void css_recurse(listint_t **l, listint_t *curr, listint_t *stop, int dir)
+{
+	int swap = 0;
+	listint_t *temp = NULL, *next_stop = NULL;
 
-	limit1 = limit2 = NULL;
-	ptr = *list;
+	if (stop != NULL) /* prevents dereference of NULL on first reverse pass */
+		next_stop = curr;
 
-	do {
-		increase_sort(&ptr, &limit1, list);
-		decrease_sort(&ptr, &limit2, list);
-	} while (limit1 != limit2);
+	if (dir == 1)
+	{
+		do {
+			if (curr->n > curr->next->n)
+			{
+				temp = curr->next;
+				swap_nodes(&(*l), &curr, &temp, &swap);
+			}
+			else
+				curr = curr->next;
+		} while (curr->next != stop);
+		if (swap)
+			css_recurse(&(*l), curr->prev, next_stop, -1);
+	}
+	else /* dir == -1 */
+	{
+		while (curr->prev != stop)
+		{
+			if (curr->n < curr->prev->n)
+			{
+				temp = curr->prev;
+				swap_nodes(&(*l), &temp, &curr, &swap);
+			}
+			else
+				curr = curr->prev;
+		}
+		if (swap)
+			css_recurse(&(*l), curr->next, next_stop, 1);
+	}
+}
+/**
+ * swap_nodes - swap two nodes and print list
+ * @list: list (for print)
+ * @a: left node
+ * @b: right node
+ * @s: pointer to flag tracking swaps in calling func
+ */
+void swap_nodes(listint_t **list, listint_t **a, listint_t **b, int *s)
+{
+	(*a)->next = (*b)->next;
+	(*b)->prev = (*a)->prev;
+	if ((*b)->next)
+		(*b)->next->prev = (*a);
+	if ((*a)->prev)
+		(*a)->prev->next = (*b);
+	(*b)->next = (*a);
+	(*a)->prev = (*b);
+	if (*a == *list)
+		*list = *b;
+
+	print_list(*list);
+	*s = 1;
 }

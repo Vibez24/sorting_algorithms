@@ -1,84 +1,113 @@
 #include "sort.h"
-#include <stdio.h>
-/**
- * swap_nums - swaps numbers
- *
- * @arr: input array
- * @a: first index
- * @b: second index
- * Return: no return
- */
-void swap_nums(int *arr, int a, int b)
-{
-	arr[a] = arr[a] + arr[b];
-	arr[b] = arr[a] - arr[b];
-	arr[a] = arr[a] - arr[b];
-}
+
+void sift_down(int *array, size_t start, size_t end, size_t size);
+void swap_elem(int *arr, size_t size, int *a, int *b);
+
 
 /**
- * recursion_heap - recursion that builds the max heap tree
+ * sift_down - Builds heap form bottom up
  *
- * @arr: input array
- * @i: index number
- * @size: size of the array
- * @limit: limit of the array
- * Return: no return
+ * @array: List to be sorted
+ * @start: Subscript of the root ot the heap
+ * @size: Size of array
+ * @end: Subscript of the last element of the heap
  */
-void recursion_heap(int *arr, int i, size_t size, int limit)
+void sift_down(int *array, size_t start, size_t end, size_t size)
 {
-	int bigger;
-	int i2;
+	size_t root, child, swap;
 
-	i2 = i * 2;
+	root = start;
 
-	if (i2 + 2 < limit)
+	while ((root * 2) + 1 <= end)
 	{
-		recursion_heap(arr, i2 + 1, size, limit);
-		recursion_heap(arr, i2 + 2, size, limit);
-	}
+		/* Subscript of left child */
+		child = (root * 2) + 1;
+		swap = root;
 
-	if (i2 + 1 >= limit)
-		return;
-
-	if (i2 + 2 < limit)
-		bigger = (arr[i2 + 1] > arr[i2 + 2]) ? (i2 + 1) : (i2 + 2);
-	else
-		bigger = i2 + 1;
-
-	if (arr[i] < arr[bigger])
-	{
-		swap_nums(arr, i, bigger);
-		print_array(arr, size);
-		recursion_heap(arr, bigger, size, limit);
+		if (array[swap] < array[child])
+		{
+			/* Swap root and left child */
+			swap = child;
+		}
+		if (child + 1 <= end && array[swap] < array[child + 1])
+		{
+			/* Swap root with right child */
+			swap = child + 1;
+		}
+		/* If one child is greater than other */
+		if (swap != root)
+		{
+			swap_elem(array, size, &array[root], &array[swap]);
+			root = swap;
+		}
+		else
+		{
+			return;
+		}
 	}
 }
 
+
 /**
- * heap_sort - sorts an array of integers in ascending
- * order using the Heap sort algorithm
- *
- * @array: input array
- * @size: size of the array
+ * heapify - Arranges heap so largest number is root
+ * @array: array (for print)
+ * @size: size of array (for print)
+ */
+void heapify(int *array, size_t size)
+{
+	int start;
+
+	/* Last non-leaf */
+	start = (size / 2) - 1;
+
+	while (start >= 0)
+	{
+		sift_down(array, start, size - 1, size);
+		start--;
+	}
+}
+
+
+/**
+ * heap_sort - Sort list in ascending order
+ * @array: Array to be sorted
+ * @size: Size of the array
+ * Return: Void
  */
 void heap_sort(int *array, size_t size)
 {
-	int i;
-	size_t limit;
+	size_t last;
 
-	if (!array || size == 0)
-		return;
-
-	i = 0;
-	limit = size;
-
-	while (limit > 1)
+	if (!array || size < 2)
 	{
-		recursion_heap(array, i, size, limit);
-		if (array[i] >= array[limit - 1])
-		{
-			swap_nums(array, i, limit - 1);
-			print_array(array, size);
-		}
-		limit--;
+		return;
 	}
+
+	last = size - 1;
+
+	heapify(array, size);
+
+	while (last > 0)
+	{
+		swap_elem(array, size, &array[last], &array[0]);
+		last--;
+		sift_down(array, 0, last, size);
+	}
+}
+
+/**
+ * swap_elem - swap value of array elements
+ * @array: array (for print)
+ * @size: size of array (for print)
+ * @a: pointer to array element
+ * @b: pointer to array element
+ */
+void swap_elem(int *array, size_t size, int *a, int *b)
+{
+	int temp;
+
+	temp = *a;
+	*a = *b;
+	*b = temp;
+	print_array(array, size);
 }
